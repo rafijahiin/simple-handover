@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SIMPLE — Monthly Programme Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --unfpa:#F96000; --unfpa-soft:#FFE7D8; --unfpa-deep:#C44E00;
+    --ink:#131619; --ink-2:#2A2F35; --ash:#686A6C; --silver:#D9DBE1;
+    --paper:#FBFAF8; --card:#FFFFFF; --pos:#2E7D5B; --neg:#C0392B;
+    --ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#EDECE8;font-family:var(--ui);color:var(--ink);
+    display:flex;justify-content:center;padding:32px 16px;-webkit-font-smoothing:antialiased}
+  .sheet{width:820px;background:var(--paper);border-radius:18px;overflow:hidden;
+    box-shadow:0 24px 70px rgba(19,22,25,.22);position:relative}
+  .sheet::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;
+    background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .r{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.22,1,.36,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .r1{animation-delay:.05s}.r2{animation-delay:.14s}.r3{animation-delay:.24s}
+  .r4{animation-delay:.34s}.r5{animation-delay:.46s}.r6{animation-delay:.58s}
+  @media(prefers-reduced-motion:reduce){.r{animation:none;opacity:1;transform:none}}
+  .pad{padding:30px 40px}
+  .mast{display:flex;align-items:center;justify-content:space-between;padding:26px 40px 0}
+  .wm{display:flex;align-items:center;gap:11px;font-weight:700;font-size:20px;letter-spacing:-.01em}
+  .wm .dot{width:13px;height:13px;border-radius:50%;background:var(--unfpa);box-shadow:0 0 0 5px var(--unfpa-soft)}
+  .org{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--ash);text-transform:uppercase}
+  .title{padding:18px 40px 6px}
+  .kick{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--unfpa)}
+  h1{font-size:38px;line-height:1.02;letter-spacing:-.02em;margin:6px 0 8px}
+  .sub{font-size:13px;color:var(--ash)}
+  .sub b{color:var(--ink-2)}
+  .ai{font-style:italic;font-size:13.5px;color:var(--ink-2);max-width:62ch;margin-top:12px;
+    border-left:3px solid var(--unfpa);padding-left:12px;line-height:1.5}
+  .hero{display:flex;align-items:flex-end;gap:26px;margin-top:22px}
+  .bignum{font-size:74px;font-weight:700;line-height:.9;letter-spacing:-.03em;color:var(--unfpa);font-variant-numeric:tabular-nums}
+  .heroside{padding-bottom:8px}
+  .heroside .lab{font-size:13px;color:var(--ash);max-width:18ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;font-weight:700;
+    padding:4px 10px;border-radius:999px}
+  .pill.pos{color:var(--pos);background:rgba(46,125,91,.10)}
+  .pill.neg{color:var(--neg);background:rgba(192,57,43,.10)}
+  .spark{margin-left:auto;padding-bottom:6px}
+  .grid{display:grid;gap:14px}
+  .three{grid-template-columns:repeat(3,1fr);margin-top:8px}
+  .partner{background:var(--card);border:1px solid #ECEAE5;border-radius:14px;padding:16px 18px}
+  .partner .nm{font-size:12.5px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+  .swatch{width:9px;height:9px;border-radius:3px}
+  .partner .v{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:6px 0 10px;font-variant-numeric:tabular-nums}
+  .track{height:8px;border-radius:5px;background:#EFEDE8;overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .partner .x{font-size:11.5px;color:var(--ash);margin-top:8px}
+  .section-h{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 12px}
+  .section-h .t{font-size:13px;font-weight:700;letter-spacing:.04em}
+  .section-h .n{font-size:11px;color:var(--ash);letter-spacing:.08em;text-transform:uppercase}
+  .six{grid-template-columns:repeat(3,1fr)}
+  .tile{background:var(--card);border:1px solid #ECEAE5;border-radius:14px;padding:15px 16px}
+  .tile .v{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .tile .l{font-size:11.5px;color:var(--ash);margin-top:3px;line-height:1.3}
+  .dist{display:grid;grid-template-columns:120px 1fr 46px;align-items:center;gap:12px;margin:9px 0}
+  .dist .d{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .dbar{height:14px;border-radius:7px;background:#EFEDE8;overflow:hidden}
+  .dbar i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .dist .num{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#ECEAE5;border-radius:14px;overflow:hidden;margin-top:26px}
+  .strip>div{background:var(--ink);color:#fff;padding:16px 18px}
+  .strip .v{font-size:27px;font-weight:700;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums}
+  .strip .v span{color:var(--unfpa)}
+  .strip .l{font-size:11px;color:#B7BBC2;margin-top:3px}
+  .foot{display:flex;align-items:center;justify-content:space-between;padding:18px 40px 30px;font-size:10.5px;color:var(--ash)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--unfpa-deep);background:var(--unfpa-soft);padding:3px 9px;border-radius:999px;font-size:10px;letter-spacing:.04em}
+  .sample{position:absolute;top:18px;right:40px;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--ash);border:1px dashed var(--silver);padding:3px 8px;border-radius:6px}
+</style>
+</head>
+<body>
+  <div class="sheet">
+    {% if is_sample %}<span class="sample">SAMPLE · ILLUSTRATIVE DATA</span>{% endif %}
+
+    <div class="mast r r1">
+      <div class="wm"><span class="dot"></span>SIMPLE</div>
+      <div class="org">{{ org_line }}</div>
+    </div>
+
+    <div class="title r r1">
+      <div class="kick">{{ kicker }}</div>
+      <h1>{{ period_title }} — at a glance</h1>
+      <div class="sub">{{ focus_line|safe }}</div>
+      {% if ai_summary %}<div class="ai">{{ ai_summary }}</div>{% endif %}
+    </div>
+
+    <div class="pad" style="padding-top:6px">
+      <div class="hero r r2">
+        <div class="bignum">{{ total_fmt }}</div>
+        <div class="heroside">
+          <div class="lab">activities recorded across {{ districts_covered }} districts</div>
+          {% if mom_abs %}<div class="pill {{ mom_class }}">{{ mom_dir }} {{ mom_abs }}% vs {{ prev_month }}</div>{% endif %}
+        </div>
+        {% if spark_points %}
+        <div class="spark">
+          <svg width="170" height="48" viewBox="0 0 170 48" fill="none">
+            <polyline points="{{ spark_points }}" stroke="#F96000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="{{ spark_last_x }}" cy="{{ spark_last_y }}" r="4" fill="#F96000"/>
+          </svg>
+          <div style="font-size:10px;color:var(--ash);text-align:right;margin-top:2px">12-month trend</div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if breakdown %}
+      <div class="section-h" style="margin:24px 0 10px"><div class="t">{{ breakdown_title }}</div><div class="n">{{ breakdown_note }}</div></div>
+      <div class="grid three">
+        {% for b in breakdown %}
+        <div class="partner r r3">
+          <div class="nm"><span class="swatch" style="background:{{ b.color }}"></span>{{ b.name }}</div>
+          <div class="v">{{ b.value_fmt }}</div>
+          <div class="track"><div class="fill" style="width:{{ b.pct }}%;background:{{ b.color }}"></div></div>
+          <div class="x">{{ b.sub }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if tiles %}
+      <div class="section-h"><div class="t">Service delivery this month</div><div class="n">approved submissions</div></div>
+      <div class="grid six">
+        {% for t in tiles %}<div class="tile r r4"><div class="v">{{ t.value_fmt }}</div><div class="l">{{ t.label }}</div></div>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if districts %}
+      <div class="section-h"><div class="t">Where the work happened</div><div class="n">top districts</div></div>
+      <div class="r r5">
+        {% for d in districts %}<div class="dist"><span class="d">{{ d.name }}</span><div class="dbar"><i style="width:{{ d.pct }}%"></i></div><span class="num">{{ d.value_fmt }}</span></div>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="strip r r6">
+        <div><div class="v">{{ fistula_fmt }}</div><div class="l">fistula cases identified</div></div>
+        <div><div class="v">{{ mpdsr_fmt }}</div><div class="l">MPDSR death reviews</div></div>
+        <div><div class="v">{{ workers_fmt }}</div><div class="l">active field workers</div></div>
+        <div><div class="v">{{ districts_covered }}<span>/{{ districts_total }}</span></div><div class="l">districts covered</div></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div><span class="badge">✦ AI-assisted</span>&nbsp; {{ foot_note }} · Generated {{ generated_date }}</div>
+      <div>SIMPLE — Integrated Digital M&amp;E System</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SIMPLE — Board Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --unfpa:#F96000; --unfpa-soft:#FFE7D8; --unfpa-deep:#C44E00;
+    --ink:#131619; --ink-2:#2A2F35; --ash:#686A6C; --silver:#D9DBE1; --line:#ECEAE5;
+    --pos:#2E7D5B; --ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--ui);color:var(--ink);background:#9B9A96}
+  .slide{width:1280px;height:720px;background:#FBFAF8;position:relative;overflow:hidden;
+    padding:64px 80px;display:flex;flex-direction:column}
+  .num{font-variant-numeric:tabular-nums}
+  /* chrome */
+  .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .wm{display:flex;align-items:center;gap:11px;font-weight:700;font-size:22px;letter-spacing:-.01em}
+  .wm .dot{width:14px;height:14px;border-radius:50%;background:var(--unfpa);box-shadow:0 0 0 5px var(--unfpa-soft)}
+  .meta{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash)}
+  .stitle{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--unfpa);margin:18px 0 18px}
+  .pageno{position:absolute;bottom:34px;right:80px;font-size:13px;color:var(--ash);font-weight:700}
+  /* cover */
+  .cover{padding:0}
+  .cover::before{content:"";position:absolute;inset:0 0 auto 0;height:16px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .cwrap{padding:90px 90px 70px;height:100%;display:flex;flex-direction:column}
+  .cover .wm{font-size:30px}.cover .wm .dot{width:20px;height:20px;box-shadow:0 0 0 7px var(--unfpa-soft)}
+  .ckick{margin-top:90px;font-size:16px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--unfpa)}
+  .ctitle{font-size:84px;line-height:.98;letter-spacing:-.03em;margin:18px 0 14px}
+  .cmeta{font-size:22px;color:var(--ink-2)}.cmeta b{color:var(--ink)}
+  .chero{margin-top:auto;display:flex;align-items:flex-end;gap:30px;border-top:1px solid var(--line);padding-top:34px}
+  .chero .big{font-size:96px;font-weight:700;line-height:.85;letter-spacing:-.03em;color:var(--unfpa)}
+  .chero .lab{font-size:18px;color:var(--ash);padding-bottom:12px;max-width:18ch}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:16px;font-weight:700;padding:5px 13px;border-radius:999px;
+    color:var(--pos);background:rgba(46,125,91,.10)}
+  /* big number slide */
+  .lede{font-size:30px;line-height:1.28;letter-spacing:-.01em;color:var(--ink);max-width:24ch;margin-top:6px}
+  .lede b{color:var(--unfpa)}
+  /* kpi tiles */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:auto;margin-bottom:auto}
+  .tile{border:1px solid var(--line);border-radius:18px;padding:28px 30px;background:#fff}
+  .tile .v{font-size:52px;font-weight:700;letter-spacing:-.025em;line-height:1}
+  .tile .l{font-size:16px;color:var(--ash);margin-top:8px}
+  /* bars */
+  .bars{margin-top:auto;margin-bottom:auto}
+  .row{display:grid;grid-template-columns:230px 1fr 90px;align-items:center;gap:20px;margin:14px 0}
+  .row .k{font-size:19px;font-weight:700;color:var(--ink-2)}
+  .bar{height:22px;border-radius:11px;background:#F1EFEA;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:11px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .row .n{font-size:20px;font-weight:700;text-align:right;color:var(--ink-2)}
+  /* partner cards */
+  .psplit{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:auto;margin-bottom:auto}
+  .pc{border:1px solid var(--line);border-radius:20px;padding:34px 32px;background:#fff}
+  .pc .nm{font-size:20px;font-weight:700;display:flex;align-items:center;gap:11px;color:var(--ink-2)}
+  .sw{width:14px;height:14px;border-radius:4px}
+  .pc .v{font-size:64px;font-weight:700;letter-spacing:-.02em;margin:14px 0;line-height:1}
+  .pc .track{height:12px;border-radius:7px;background:#EFEDE8;overflow:hidden}
+  .pc .fill{height:100%;border-radius:7px}
+  .pc .x{font-size:16px;color:var(--ash);margin-top:14px}
+  /* programme strip + trend */
+  .twocol{display:flex;gap:40px;margin-top:auto;margin-bottom:auto}
+  .strip{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line);border-radius:18px;overflow:hidden;flex:1;align-content:stretch}
+  .strip>div{background:var(--ink);color:#fff;padding:28px 30px;display:flex;flex-direction:column;justify-content:center}
+  .strip .v{font-size:50px;font-weight:700;color:#fff;line-height:1}.strip .v span{color:var(--unfpa)}
+  .strip .l{font-size:15px;color:#B7BBC2;margin-top:6px}
+  .trendwrap{flex:1.1}
+  .trend{display:flex;align-items:flex-end;gap:10px;height:230px;border-bottom:1px solid var(--line)}
+  .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .tb i{width:100%;max-width:40px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#FF8A3D,var(--unfpa))}
+  .tb i.last{background:var(--unfpa);box-shadow:0 0 0 3px var(--unfpa-soft)}
+  .tb span{font-size:13px;color:var(--ash);margin-top:8px}
+  /* closing */
+  .closing{justify-content:center;align-items:flex-start}
+  .closing .big{font-size:60px;line-height:1.08;letter-spacing:-.02em;max-width:20ch}
+  .closing .big b{color:var(--unfpa)}
+  .closing .sig{margin-top:40px;font-size:18px;color:var(--ash)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--unfpa-deep);background:var(--unfpa-soft);padding:5px 12px;border-radius:999px;font-size:14px}
+</style>
+</head>
+<body>
+
+  <!-- 1 · COVER -->
+  <div class="slide cover">
+    <div class="cwrap">
+      <div class="wm"><span class="dot"></span>SIMPLE</div>
+      <div class="ckick">Monthly Programme Review</div>
+      <div class="ctitle">{{ period_title }}</div>
+      <div class="cmeta"><b>{{ org }}</b> &nbsp;·&nbsp; CIPRB · UNFPA Bangladesh</div>
+      <div class="chero">
+        <div class="big num">{{ total_fmt }}</div>
+        <div class="lab">field activities this month{% if mom_abs %} <span class="pill">{{ mom_dir }} {{ mom_abs }}% vs {{ prev_month }}</span>{% endif %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 · HEADLINE KPIs -->
+  <div class="slide">
+    <div class="head"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="stitle">At a glance</div>
+    <div class="kpis">
+      {% for k in kpis %}<div class="tile"><div class="v num">{{ k.value_fmt }}</div><div class="l">{{ k.label }}</div></div>{% endfor %}
+    </div>
+    <div class="pageno">2</div>
+  </div>
+
+  <!-- 3 · SERVICE DELIVERY -->
+  <div class="slide">
+    <div class="head"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="stitle">Service delivery this month</div>
+    <div class="bars">
+      {% for s in service_rows %}<div class="row"><span class="k">{{ s.label }}</span><div class="bar"><i style="width:{{ s.pct }}%"></i></div><span class="n num">{{ s.value_fmt }}</span></div>{% endfor %}
+    </div>
+    <div class="pageno">3</div>
+  </div>
+
+  <!-- 4 · BY PARTNER -->
+  {% if breakdown %}
+  <div class="slide">
+    <div class="head"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="stitle">By partner</div>
+    <div class="psplit">
+      {% for b in breakdown %}<div class="pc"><div class="nm"><span class="sw" style="background:{{ b.color }}"></span>{{ b.name }}</div><div class="v num">{{ b.value_fmt }}</div><div class="track"><div class="fill" style="width:{{ b.pct }}%;background:{{ b.color }}"></div></div><div class="x">{{ b.sub }}</div></div>{% endfor %}
+    </div>
+    <div class="pageno">4</div>
+  </div>
+  {% endif %}
+
+  <!-- 5 · GEOGRAPHY -->
+  <div class="slide">
+    <div class="head"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="stitle">Geographic reach — top districts</div>
+    <div class="bars">
+      {% for d in districts %}<div class="row"><span class="k">{{ d.name }}</span><div class="bar"><i style="width:{{ d.pct }}%"></i></div><span class="n num">{{ d.value_fmt }}</span></div>{% endfor %}
+    </div>
+    <div class="pageno">5</div>
+  </div>
+
+  <!-- 6 · PROGRAMME AREAS + TREND -->
+  <div class="slide">
+    <div class="head"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="stitle">Programme areas &amp; 12-month trend</div>
+    <div class="twocol">
+      <div class="strip">
+        <div><div class="v num">{{ fistula_fmt }}</div><div class="l">fistula cases identified</div></div>
+        <div><div class="v num">{{ mpdsr_fmt }}</div><div class="l">MPDSR death reviews</div></div>
+        <div><div class="v num">{{ workers_fmt }}</div><div class="l">active field workers</div></div>
+        <div><div class="v num">{{ districts_covered }}<span>/{{ districts_total }}</span></div><div class="l">districts covered</div></div>
+      </div>
+      <div class="trendwrap">
+        {% if trend %}<div class="trend">{% for t in trend %}<div class="tb"><i class="{% if forloop.last %}last{% endif %}" style="height:{{ t.height }}%"></i><span>{{ t.label }}</span></div>{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+    <div class="pageno">6</div>
+  </div>
+
+  <!-- 7 · CLOSING -->
+  <div class="slide closing">
+    <div class="head" style="position:absolute;top:64px;left:80px;right:80px"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">{{ period_title }} · {{ org }}</div></div>
+    <div class="big">{{ closing_line }}</div>
+    <div class="sig"><span class="badge">✦ AI-assisted</span> &nbsp; {{ foot_note }} · Generated {{ generated_date }}</div>
+  </div>
+
+</body>
+</html>

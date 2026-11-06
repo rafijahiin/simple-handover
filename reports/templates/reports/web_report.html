@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SIMPLE — Monthly Pulse · {{ period_title }} · {{ org }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --unfpa:#F96000; --unfpa-soft:#FFE7D8; --unfpa-deep:#C44E00;
+    --ink:#131619; --ink-2:#2A2F35; --ash:#686A6C; --silver:#D9DBE1; --line:#ECEAE5;
+    --paper:#FBFAF8; --card:#FFFFFF; --pos:#2E7D5B; --neg:#C0392B;
+    --ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--ui);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.45}
+  .num{font-variant-numeric:tabular-nums}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 28px}
+
+  /* reveal-on-load, staggered */
+  .rv{opacity:0;transform:translateY(22px);animation:rise .8s cubic-bezier(.22,1,.36,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.rv{animation:none;opacity:1;transform:none}.bar i,.fill,.tb i{transition:none!important}}
+
+  /* sticky mini header */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(251,250,248,.86);backdrop-filter:saturate(1.4) blur(8px);
+    border-bottom:1px solid var(--line)}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .wm{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .wm .dot{width:11px;height:11px;border-radius:50%;background:var(--unfpa);box-shadow:0 0 0 4px var(--unfpa-soft)}
+  .topbar .meta{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash)}
+
+  /* hero */
+  .hero{position:relative;overflow:hidden;padding:88px 0 70px;border-bottom:1px solid var(--line)}
+  .hero::before{content:"";position:absolute;top:-180px;right:-160px;width:520px;height:520px;border-radius:50%;
+    background:radial-gradient(circle,var(--unfpa-soft),transparent 70%);opacity:.8}
+  .kick{font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--unfpa)}
+  h1{font-size:clamp(46px,8vw,84px);line-height:.98;letter-spacing:-.03em;margin:10px 0 8px}
+  .focus{font-size:17px;color:var(--ink-2)} .focus b{color:var(--ink)}
+  .heronum{display:flex;align-items:flex-end;gap:30px;flex-wrap:wrap;margin-top:42px}
+  .big{font-size:clamp(72px,13vw,120px);font-weight:700;line-height:.82;letter-spacing:-.04em;color:var(--unfpa)}
+  .heroside{padding-bottom:12px}.heroside .l{font-size:15px;color:var(--ash);max-width:20ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13.5px;font-weight:700;padding:5px 12px;border-radius:999px}
+  .pill.pos{color:var(--pos);background:rgba(46,125,91,.10)}.pill.neg{color:var(--neg);background:rgba(192,57,43,.10)}
+  .ai{font-style:italic;font-size:16px;color:var(--ink-2);max-width:64ch;margin-top:30px;border-left:3px solid var(--unfpa);padding-left:16px;line-height:1.55}
+
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .sh{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--unfpa);margin-bottom:22px;display:flex;justify-content:space-between}
+  .sh .n{color:var(--ash);letter-spacing:.08em}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;transition:transform .25s ease,box-shadow .25s ease}
+  .tile:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(19,22,25,.10)}
+  .tile .v{font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .tile .l{font-size:13px;color:var(--ash);margin-top:6px}
+
+  .psplit{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .pc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;transition:transform .25s ease,box-shadow .25s ease}
+  .pc:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(19,22,25,.10)}
+  .pc .nm{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+  .sw{width:10px;height:10px;border-radius:3px}
+  .pc .v{font-size:40px;font-weight:700;margin:8px 0 12px;line-height:1}
+  .track{height:9px;border-radius:6px;background:#EFEDE8;overflow:hidden}
+  .fill{height:100%;border-radius:6px;width:0;animation:grow 1.1s .3s cubic-bezier(.22,1,.36,1) forwards}
+  .pc .x{font-size:13px;color:var(--ash);margin-top:11px}
+  @keyframes grow{to{width:var(--w)}}
+
+  .row{display:grid;grid-template-columns:180px 1fr 64px;align-items:center;gap:16px;margin:11px 0}
+  .row .k{font-size:14px;font-weight:700;color:var(--ink-2)}
+  .bar{height:16px;border-radius:8px;background:#F1EFEA;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D);width:0;animation:grow 1.1s .2s cubic-bezier(.22,1,.36,1) forwards}
+  .row .n{font-size:14px;font-weight:700;text-align:right;color:var(--ink-2)}
+
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--line);border-radius:16px;overflow:hidden}
+  .strip>div{background:var(--ink);color:#fff;padding:24px 22px}
+  .strip .v{font-size:42px;font-weight:700;color:#fff;line-height:1}.strip .v span{color:var(--unfpa)}
+  .strip .l{font-size:12.5px;color:#B7BBC2;margin-top:6px}
+
+  .trend{display:flex;align-items:flex-end;gap:10px;height:200px;border-bottom:1px solid var(--line)}
+  .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .tb i{width:100%;max-width:42px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#FF8A3D,var(--unfpa));height:0;animation:tgrow 1s .2s cubic-bezier(.22,1,.36,1) forwards}
+  .tb i.last{background:var(--unfpa);box-shadow:0 0 0 3px var(--unfpa-soft)}
+  .tb span{font-size:12px;color:var(--ash);margin-top:8px}
+  @keyframes tgrow{to{height:var(--h)}}
+
+  footer{padding:40px 0 60px;font-size:12px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--unfpa-deep);background:var(--unfpa-soft);padding:4px 10px;border-radius:999px;font-size:11px}
+</style>
+</head>
+<body>
+  <div class="topbar"><div class="wrap"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="meta">Monthly Pulse · {{ period_title }} · {{ org }}</div></div></div>
+
+  <header class="hero"><div class="wrap">
+    <div class="kick rv">Monthly Programme Pulse</div>
+    <h1 class="rv" style="animation-delay:.06s">{{ period_title }}</h1>
+    <div class="focus rv" style="animation-delay:.12s">{{ focus_line|safe }}</div>
+    <div class="heronum rv" style="animation-delay:.2s">
+      <div class="big num">{{ total_fmt }}</div>
+      <div class="heroside">
+        <div class="l">field activities recorded this month</div>
+        {% if mom_abs %}<div class="pill {{ mom_class }}">{{ mom_dir }} {{ mom_abs }}% vs {{ prev_month }}</div>{% endif %}
+      </div>
+    </div>
+    {% if ai_summary %}<div class="ai rv" style="animation-delay:.3s">{{ ai_summary }}</div>{% endif %}
+  </div></header>
+
+  <main>
+    <section><div class="wrap rv">
+      <div class="sh">At a glance <span class="n">approved submissions</span></div>
+      <div class="kpis">{% for k in kpis %}<div class="tile"><div class="v num">{{ k.value_fmt }}</div><div class="l">{{ k.label }}</div></div>{% endfor %}</div>
+    </div></section>
+
+    {% if breakdown %}
+    <section><div class="wrap rv">
+      <div class="sh">By partner <span class="n">share of activity</span></div>
+      <div class="psplit">{% for b in breakdown %}<div class="pc"><div class="nm"><span class="sw" style="background:{{ b.color }}"></span>{{ b.name }}</div><div class="v num">{{ b.value_fmt }}</div><div class="track"><div class="fill" style="--w:{{ b.pct }}%;background:{{ b.color }}"></div></div><div class="x">{{ b.sub }}</div></div>{% endfor %}</div>
+    </div></section>
+    {% endif %}
+
+    <section><div class="wrap rv">
+      <div class="sh">Service delivery this month</div>
+      {% for s in service_rows %}<div class="row"><span class="k">{{ s.label }}</span><div class="bar"><i style="--w:{{ s.pct }}%"></i></div><span class="n num">{{ s.value_fmt }}</span></div>{% endfor %}
+    </div></section>
+
+    <section><div class="wrap rv">
+      <div class="sh">Where the work happened <span class="n">top districts</span></div>
+      {% for d in districts %}<div class="row"><span class="k">{{ d.name }}</span><div class="bar"><i style="--w:{{ d.pct }}%"></i></div><span class="n num">{{ d.value_fmt }}</span></div>{% endfor %}
+    </div></section>
+
+    <section><div class="wrap rv">
+      <div class="sh">Programme areas</div>
+      <div class="strip">
+        <div><div class="v num">{{ fistula_fmt }}</div><div class="l">fistula cases identified</div></div>
+        <div><div class="v num">{{ mpdsr_fmt }}</div><div class="l">MPDSR death reviews</div></div>
+        <div><div class="v num">{{ workers_fmt }}</div><div class="l">active field workers</div></div>
+        <div><div class="v num">{{ districts_covered }}<span>/{{ districts_total }}</span></div><div class="l">districts covered</div></div>
+      </div>
+    </div></section>
+
+    {% if trend %}
+    <section><div class="wrap rv">
+      <div class="sh">12-month activity trend</div>
+      <div class="trend">{% for t in trend %}<div class="tb"><i class="{% if forloop.last %}last{% endif %}" style="--h:{{ t.height }}%"></i><span>{{ t.label }}</span></div>{% endfor %}</div>
+    </div></section>
+    {% endif %}
+  </main>
+
+  <footer><div class="wrap" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:12px">
+    <div><span class="badge">✦ AI-assisted</span>&nbsp; {{ foot_note }} · Generated {{ generated_date }}</div>
+    <div>SIMPLE — Integrated Digital M&amp;E System · CIPRB · UNFPA Bangladesh</div>
+  </div></footer>
+</body>
+</html>

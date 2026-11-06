@@ -1,0 +1,11 @@
+ID,Date found,Tester name,Organisation,Page / Section,Device & Browser,What you did (steps),What you expected,What actually happened,Severity,Screenshot link,Status,Developer notes
+UAT-001,2026-06-08,(example) Dr A. Sayeed,CIPRB,CIPRB Dashboard,Windows / Chrome,Selected the SIDA donor pill,All visuals should re-scope to SIDA districts,Near Miss panel updated correctly,Cosmetic,,Closed,Example row — delete before use
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,
+,,,,,,,,,,,New,

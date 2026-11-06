@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.eggs/
+.env
+.venv/
+venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# Django FileField report uploads (year-based subdirectories)
+reports/20*/
+
+# Generated XLSForms (build artifacts from build_ciprb_forms / build_bandhu_forms)
+forms_out/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Railway
+.railway/
+mediafiles/
+secrets-to-scrub.txt
+_handoff_*.txt
+_kobo_backup/
+relative.sqlite3
+
+# Handover repo: never commit partner data or a database
+*.sqlite3
+*.sqlite
+*.dump
+*.sql
+mediafiles/
+media/
+exports/
+# Developer scratch scripts, root level only. NOT anchored patterns like
+# "_*.py", which also match every __init__.py and the _fsw_modules /
+# _hijra_modules form builders.
+/_*.py
+/_*.md
+/_skipaudit/
+/_ciprb_build/
+/_kobo_backup/

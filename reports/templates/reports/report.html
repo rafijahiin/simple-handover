@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SIMPLE — Monthly Programme Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --unfpa:#F96000; --unfpa-soft:#FFE7D8; --unfpa-deep:#C44E00;
+    --ink:#131619; --ink-2:#2A2F35; --ash:#686A6C; --silver:#D9DBE1;
+    --line:#ECEAE5; --pos:#2E7D5B; --neg:#C0392B;
+    --ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  }
+  @page{ size:A4; margin:0; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--ui);color:var(--ink);-webkit-font-smoothing:antialiased;background:#fff}
+  .page{width:210mm;min-height:297mm;padding:18mm 18mm 16mm;position:relative;page-break-after:always;background:#fff}
+  .page:last-child{page-break-after:auto}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* running masthead / footer */
+  .mh{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px}
+  .wm{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .wm .dot{width:10px;height:10px;border-radius:50%;background:var(--unfpa);box-shadow:0 0 0 4px var(--unfpa-soft)}
+  .mh .r{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash)}
+  .pf{position:absolute;left:18mm;right:18mm;bottom:10mm;display:flex;justify-content:space-between;
+    font-size:9.5px;color:var(--ash);border-top:1px solid var(--line);padding-top:7px}
+
+  h2{font-size:20px;letter-spacing:-.01em;margin:0 0 4px}
+  .lead{font-size:12px;color:var(--ash);margin-bottom:16px}
+  .sec{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--unfpa);margin:24px 0 12px}
+
+  /* COVER */
+  .cover{padding:0}
+  .cover::before{content:"";position:absolute;inset:0 0 auto 0;height:14px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .cwrap{padding:30mm 22mm 22mm;display:flex;flex-direction:column;min-height:297mm}
+  .cwm{display:flex;align-items:center;gap:12px;font-weight:700;font-size:24px;letter-spacing:-.01em}
+  .cwm .dot{width:16px;height:16px;border-radius:50%;background:var(--unfpa);box-shadow:0 0 0 6px var(--unfpa-soft)}
+  .ckick{margin-top:64px;font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--unfpa)}
+  .ctitle{font-size:54px;line-height:1.02;letter-spacing:-.025em;margin:14px 0 10px;max-width:16ch}
+  .cmeta{font-size:16px;color:var(--ink-2)}
+  .cmeta b{color:var(--ink)}
+  .chero{margin-top:auto;display:flex;align-items:flex-end;gap:24px;border-top:1px solid var(--line);padding-top:26px}
+  .chero .big{font-size:72px;font-weight:700;line-height:.9;letter-spacing:-.03em;color:var(--unfpa)}
+  .chero .lab{font-size:13px;color:var(--ash);padding-bottom:8px;max-width:20ch}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px}
+  .pill.pos{color:var(--pos);background:rgba(46,125,91,.10)} .pill.neg{color:var(--neg);background:rgba(192,57,43,.10)}
+  .cfoot{margin-top:26px;font-size:11px;color:var(--ash);display:flex;justify-content:space-between}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--unfpa-deep);background:var(--unfpa-soft);padding:3px 9px;border-radius:999px;font-size:10px}
+  .sample{position:absolute;top:24px;right:24px;font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--ash);border:1px dashed var(--silver);padding:3px 8px;border-radius:6px}
+
+  /* exec summary */
+  .ai p{font-size:12.5px;line-height:1.62;color:var(--ink-2);margin-bottom:9px}
+  .ai p:first-child{font-size:13.5px;color:var(--ink)}
+
+  /* kpi tiles */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  .tile{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tile .v{font-size:25px;font-weight:700;letter-spacing:-.02em}
+  .tile .l{font-size:11px;color:var(--ash);margin-top:3px}
+
+  /* bars (service + districts) */
+  .row{display:grid;grid-template-columns:150px 1fr 52px;align-items:center;gap:12px;margin:7px 0}
+  .row .k{font-size:12px;font-weight:700;color:var(--ink-2)}
+  .bar{height:13px;border-radius:7px;background:#F1EFEA;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--unfpa),#FF8A3D)}
+  .row .n{font-size:12px;font-weight:700;text-align:right;color:var(--ink-2)}
+
+  /* partner split inline */
+  .psplit{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  .pc{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .pc .nm{font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;color:var(--ink-2)}
+  .sw{width:9px;height:9px;border-radius:3px}
+  .pc .v{font-size:24px;font-weight:700;margin:5px 0 9px}
+  .pc .x{font-size:11px;color:var(--ash)}
+
+  /* trend bars */
+  .trend{display:flex;align-items:flex-end;gap:7px;height:120px;margin-top:6px;border-bottom:1px solid var(--line);padding-bottom:0}
+  .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .tb i{width:100%;max-width:26px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#FF8A3D,var(--unfpa))}
+  .tb i.last{background:var(--unfpa);box-shadow:0 0 0 2px var(--unfpa-soft)}
+  .tb span{font-size:9px;color:var(--ash);margin-top:5px}
+
+  /* highlights strip */
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
+  .strip>div{background:var(--ink);color:#fff;padding:15px 16px}
+  .strip .v{font-size:25px;font-weight:700;color:#fff} .strip .v span{color:var(--unfpa)}
+  .strip .l{font-size:10.5px;color:#B7BBC2;margin-top:3px}
+</style>
+</head>
+<body>
+
+  <!-- ── PAGE 1 · COVER ─────────────────────────────────────────── -->
+  <div class="page cover">
+    {% if is_sample %}<span class="sample">SAMPLE · ILLUSTRATIVE DATA</span>{% endif %}
+    <div class="cwrap">
+      <div class="cwm"><span class="dot"></span>SIMPLE</div>
+      <div class="ckick">Monthly Programme Report</div>
+      <div class="ctitle">{{ period_title }}</div>
+      <div class="cmeta"><b>{{ org }}</b> &nbsp;·&nbsp; Reproductive &amp; Child Health</div>
+      <div class="chero">
+        <div class="big num">{{ total_fmt }}</div>
+        <div class="lab">field activities recorded this month{% if mom_abs %} &nbsp;<span class="pill {{ mom_class }}">{{ mom_dir }} {{ mom_abs }}% vs {{ prev_month }}</span>{% endif %}</div>
+      </div>
+      <div class="cfoot">
+        <div><span class="badge">✦ AI-assisted</span>&nbsp; CIPRB · UNFPA Bangladesh</div>
+        <div>Generated {{ generated_date }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE 2 · SUMMARY + AT A GLANCE ─────────────────────────── -->
+  <div class="page">
+    <div class="mh"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="r">{{ period_title }} · {{ org }}</div></div>
+
+    <h2>Executive summary</h2>
+    <div class="ai">
+      {% for para in narrative %}<p>{{ para }}</p>{% endfor %}
+    </div>
+
+    <div class="sec">At a glance</div>
+    <div class="kpis">
+      {% for k in kpis %}<div class="tile"><div class="v num">{{ k.value_fmt }}</div><div class="l">{{ k.label }}</div></div>{% endfor %}
+    </div>
+
+    <div class="sec">Service delivery this month</div>
+    {% for s in service_rows %}
+      <div class="row"><span class="k">{{ s.label }}</span><div class="bar"><i style="width:{{ s.pct }}%"></i></div><span class="n num">{{ s.value_fmt }}</span></div>
+    {% endfor %}
+
+    <div class="pf"><div>SIMPLE — Integrated Digital M&amp;E System</div><div>Page 2</div></div>
+  </div>
+
+  <!-- ── PAGE 3 · PARTNERS + GEOGRAPHY + HIGHLIGHTS + TREND ──────── -->
+  <div class="page">
+    <div class="mh"><div class="wm"><span class="dot"></span>SIMPLE</div><div class="r">{{ period_title }} · {{ org }}</div></div>
+
+    {% if breakdown %}
+    <div class="sec" style="margin-top:0">By partner</div>
+    <div class="psplit">
+      {% for b in breakdown %}<div class="pc"><div class="nm"><span class="sw" style="background:{{ b.color }}"></span>{{ b.name }}</div><div class="v num">{{ b.value_fmt }}</div><div class="x">{{ b.sub }}</div></div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="sec">Geographic reach — top districts</div>
+    {% for d in districts %}
+      <div class="row"><span class="k">{{ d.name }}</span><div class="bar"><i style="width:{{ d.pct }}%"></i></div><span class="n num">{{ d.value_fmt }}</span></div>
+    {% endfor %}
+
+    <div class="sec">Programme areas</div>
+    <div class="strip">
+      <div><div class="v num">{{ fistula_fmt }}</div><div class="l">fistula cases identified</div></div>
+      <div><div class="v num">{{ mpdsr_fmt }}</div><div class="l">MPDSR death reviews</div></div>
+      <div><div class="v num">{{ workers_fmt }}</div><div class="l">active field workers</div></div>
+      <div><div class="v num">{{ districts_covered }}<span>/{{ districts_total }}</span></div><div class="l">districts covered</div></div>
+    </div>
+
+    {% if trend %}
+    <div class="sec">12-month activity trend</div>
+    <div class="trend">
+      {% for t in trend %}<div class="tb"><i class="{% if forloop.last %}last{% endif %}" style="height:{{ t.height }}%"></i><span>{{ t.label }}</span></div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="pf"><div>{{ foot_note }}</div><div>Page 3</div></div>
+  </div>
+
+</body>
+</html>
