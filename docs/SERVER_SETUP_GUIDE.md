@@ -184,7 +184,7 @@ libraries, is inside the image. Nothing else has to be installed on the
 server.
 
 > **If CIPRB policy forbids Docker**, the application can be installed
-> directly: Python 3.12 with a virtual environment, PostgreSQL 18,
+> directly: Python 3.12 with a virtual environment, PostgreSQL 17 or later,
 > Node 20 to build the frontend once, Gunicorn, and
 > `python -m playwright install --with-deps chromium` for the report renderer.
 > It is more work to set up and more work to keep consistent, and it no longer
@@ -479,7 +479,7 @@ becomes permanently unreadable. Confirm this now, before restoring.
 
 ```bash
 docker compose cp simple-backup.dump db:/tmp/
-docker compose exec db pg_restore -U simple -d simple --clean --if-exists /tmp/simple-backup.dump
+docker compose exec db pg_restore -U simple -d simple   --clean --if-exists --no-owner --no-privileges /tmp/simple-backup.dump
 ```
 
 **Check:**
@@ -535,18 +535,41 @@ to use, so if it changes, submissions arrive and are rejected as unknown.
 
 ### 9b. Set the REST Service on each form
 
-For each deployed form, open **Settings**, then **REST Services**, and add
-one:
+**The forms do not all use the same endpoint.** Twelve go to one address and
+the two baseline surveys go to another. Sending a form to the wrong one means
+its submissions arrive and are rejected as unknown.
+
+For each form: **Settings**, then **REST Services**, then add one.
 
 | Field | Value |
 |---|---|
-| Endpoint URL | `https://simple.ciprb.org/webhook/kobo/` |
+| Endpoint URL | from the table below |
 | Method | POST |
 | Header name | `Authorization` |
 | Header value | `Token <your KOBO_WEBHOOK_SECRET>` |
 
-All fourteen CIPRB forms use that same endpoint. The system reads the
-`form_id` out of the submission and routes it from there.
+Replace `simple.ciprb.org` with your own domain. The last part of each URL is
+the form's own id, so the twelve are all different.
+
+| Excel file | Endpoint URL |
+|---|---|
+| `CIPRB-1_Fistula_Question_Bank.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_fistula_questions_v1/` |
+| `CIPRB-1b_Fistula_Campaign.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_fistula_campaign_v1/` |
+| `CIPRB-2_MPDSR_Form_01_Community_Maternal.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_mpdsr_community_maternal_v1/` |
+| `CIPRB-3_MPDSR_Form_02_Community_Neonatal.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_mpdsr_community_neonatal_v1/` |
+| `CIPRB-4_MPDSR_Form_04_Facility_Maternal.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_mpdsr_facility_maternal_v1/` |
+| `CIPRB-5_MPDSR_Form_05_Facility_Neonatal.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_mpdsr_facility_neonatal_v1/` |
+| `CIPRB-6_Social_Autopsy.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_social_autopsy_v1/` |
+| `CIPRB-7_Notification_Slip_01.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_notification_slip_01_v1/` |
+| `CIPRB-8_Notification_Slip_02.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_notification_slip_02_v1/` |
+| `CIPRB-9_Maternal_Near_Miss.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_near_miss_v1/` |
+| `CIPRB-10_MPDSR_Response_Plan.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_mpdsr_response_plan_v1/` |
+| `CIPRB-11_Safe_Surgery_Checklist.xlsx` | `https://simple.ciprb.org/webhook/programs/form/ciprb_safe_surgery_v1/` |
+| `CIPRB_Baseline_FSW.xlsx` | `https://simple.ciprb.org/webhook/kobo/` |
+| `CIPRB_Baseline_Hijra.xlsx` | `https://simple.ciprb.org/webhook/kobo/` |
+
+The two baseline surveys are the exception. They are routed by the form id
+inside the file, so they share the one address.
 
 ### 9c. Collect the new asset UIDs
 
@@ -560,29 +583,34 @@ https://kf.kobotoolbox.org/#/forms/aXXXXXXXXXXXXXXXXXXXXX/summary
                                    ^^^^^^^^^^^^^^^^^^^^^^
 ```
 
-Write down the UID of each form. You need them twice, in 9d and 9e.
+Write down the UID of each form. You need them in 9d and 9e.
 
 ### 9d. Put the new UIDs in `.env`
 
-Routing works without this, because it goes by `form_id`. These are needed for
-the parts that write back **into** KoboToolbox and read from it.
+Routing does not need these, because it goes by the form id. They are needed
+for everything that reads from or writes back **into** KoboToolbox.
 
 ```ini
 KOBO_API_TOKEN=<your own token, from your KoboToolbox account settings>
 KOBO_TOKEN=<the same value>
+KOBO_WEBHOOK_SECRET=<a secret you choose, the same one used in 9b>
 
-KOBO_ASSET_UID_MPDSR=<CIPRB-2 Community Maternal>
-KOBO_ASSET_UID_FISTULA=<CIPRB-1 Fistula Question Bank>
-KOBO_ASSET_UID_BASELINE=<CIPRB Baseline FSW>
-KOBO_ASSET_UID_FISTULA_QB=<CIPRB-1 Fistula Question Bank, same as above>
+KOBO_ASSET_UID_FISTULA_QB=<CIPRB-1 Fistula Question Bank>
 KOBO_ASSET_UID_MPDSR_ACTION=<CIPRB-10 MPDSR Response Plan>
+KOBO_ASSET_UID_MPDSR=<CIPRB-2 Community Maternal>
+KOBO_ASSET_UID_FISTULA=<CIPRB-1 Fistula Question Bank, same as above>
+KOBO_ASSET_UID_BASELINE=<CIPRB Baseline FSW>
 ```
 
-**The last two matter most.** When a fistula case or an MPDSR action is
+**The first two matter most.** When a fistula case or an MPDSR action is
 created, the system issues the official ID and writes it back into the Kobo
-submission so the paper and the screen agree. If these two still hold the old
-account's UIDs, that write-back tries to edit a form you do not own, and the
-IDs never appear in Kobo.
+submission, so the paper and the screen agree. They are also the two forms
+that receive the lookup files in 9f. If these still hold the old account's
+UIDs, the system tries to edit forms you do not own, and both the write-back
+and the lookup files fail.
+
+The token and the webhook secret are your own. You do not need the previous
+ones.
 
 Restart after editing: `docker compose up -d`
 
@@ -602,9 +630,9 @@ Then, for each form, one line:
 UPDATE indicators_koboformmapping SET kobo_asset_uid = 'aNEWUID' WHERE form_slug = 'ciprb_mpdsr_community_maternal_v1';
 ```
 
-The twelve slugs, in the order the files are numbered:
+The twelve slugs:
 
-| File | `form_slug` |
+| Excel file | `form_slug` |
 |---|---|
 | CIPRB-1 Fistula Question Bank | `ciprb_fistula_questions_v1` |
 | CIPRB-2 MPDSR Community Maternal | `ciprb_mpdsr_community_maternal_v1` |
@@ -619,16 +647,40 @@ The twelve slugs, in the order the files are numbered:
 | CIPRB Baseline FSW | `ciprb_baseline_fsw_v1` |
 | CIPRB Baseline Hijra | `ciprb_baseline_hijra_v1` |
 
-Check your work:
+Check your work, then type `\q` to leave:
 
 ```sql
 SELECT form_slug, kobo_asset_uid FROM indicators_koboformmapping
 WHERE kobo_asset_uid <> '' ORDER BY form_slug;
 ```
 
-Type `\q` to leave psql.
+### 9f. Upload the two lookup files
 
-### 9f. About the old submissions
+Two forms read a CSV of existing records so the field worker can pick one
+instead of typing it again. Those CSVs are generated from your database and
+attached to the Kobo form as media. New projects have no media, so this has to
+be done once, after 9d.
+
+```bash
+docker compose exec web python manage.py export_fistula_clients
+docker compose exec web python manage.py export_mpdsr_actions
+```
+
+The first builds `fistula_clients.csv` from the registered patients and
+attaches it to CIPRB-1. Without it, a field worker reaching the Diagnosed,
+Referred, Repaired or Rehabilitated stage cannot find the woman she
+registered, and the duplicate check at registration stops working.
+
+The second builds `mpdsr_actions.csv` and attaches it to CIPRB-10. Without it,
+the committee cannot pick an existing action to update.
+
+Both commands upload and redeploy the form, so open each one in KoboToolbox
+afterwards and confirm a new version was published.
+
+**Check:** open CIPRB-1 in Enketo and confirm the patient dropdown lists the
+restored patients. If it is empty, the UID in 9d is wrong.
+
+### 9g. About the old submissions
 
 The historical records are already in the database you restored in Step 8, so
 the dashboard is complete from day one.
@@ -874,6 +926,8 @@ ticked.
 - [ ] A REST Service added to each one, pointing at your domain
 - [ ] New asset UIDs put in `.env` (9d), especially the two write-back ones
 - [ ] The twelve registry rows updated in the database (9e)
+- [ ] The two lookup files exported and attached to CIPRB-1 and CIPRB-10 (9f)
+- [ ] CIPRB-1 opened in Enketo and the patient dropdown is populated
 - [ ] A real test submission arrives and appears in the approval queue
 - [ ] The test record is approved, then deleted
 

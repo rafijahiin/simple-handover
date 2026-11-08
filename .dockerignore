@@ -1,0 +1,47 @@
+# Keep the build context small and keep local state out of the image.
+# Without this, "COPY . ." pulls in the git history, any local database and
+# any uploaded files sitting in the working directory.
+
+.git
+.gitignore
+.github
+
+# Local state that must never be baked into an image
+*.sqlite3
+*.sqlite
+*.dump
+*.sql
+.env
+.env.*
+!.env.example
+mediafiles/
+media/
+staticfiles/
+reports/20*/
+forms_out/
+
+# Built by stage 1 inside the image, not copied from the host
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Documentation and handover material. Not needed at runtime and it is the
+# largest thing in the repository.
+docs/
+README.md
+SEMANTICS.md
+docker-compose.yml

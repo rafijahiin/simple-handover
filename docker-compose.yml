@@ -9,15 +9,19 @@
 
 services:
   db:
-    # PostgreSQL 18. The database you will be given was produced by an 18
-    # server, and pg_restore refuses to load a dump from a newer server than
-    # the one it is restoring into. Do not lower this.
-    image: postgres:18
+    # PostgreSQL 17. The database file you have been given was produced by
+    # pg_dump 17, so 17 restores it natively. 18 also works, but 18 moved the
+    # default data directory, so if you raise this you must check that the
+    # volume below still points at PGDATA. Do not go below 17.
+    image: postgres:17
     restart: always
     environment:
       POSTGRES_DB: simple
       POSTGRES_USER: simple
       POSTGRES_PASSWORD: CHANGE_ME
+      # Set explicitly so the volume mount cannot drift from where the image
+      # actually keeps its data.
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
