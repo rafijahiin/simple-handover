@@ -317,36 +317,12 @@ It holds the encryption key. Anyone who can read it can read patient data.
 
 # Step 5. Start the database and the application
 
-Create `docker-compose.yml` in `/srv/simple`:
+`docker-compose.yml` is already in the repository. Open it and change one
+line, `POSTGRES_PASSWORD`, to the same password you put in `DATABASE_URL` in
+Step 4:
 
-```yaml
-services:
-  db:
-    image: postgres:16
-    restart: always
-    environment:
-      POSTGRES_DB: simple
-      POSTGRES_USER: simple
-      POSTGRES_PASSWORD: <the same password you put in DATABASE_URL>
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  web:
-    build: .
-    restart: always
-    env_file: .env
-    environment:
-      PORT: "8080"
-    ports:
-      - "127.0.0.1:8080:8080"
-    depends_on:
-      - db
-    volumes:
-      - media:/app/mediafiles
-
-volumes:
-  pgdata:
-  media:
+```bash
+nano docker-compose.yml
 ```
 
 Note `127.0.0.1:8080:8080`. The application is deliberately **not** exposed to
@@ -437,20 +413,37 @@ login page should appear with a valid padlock.
 
 # Step 7. Create the login accounts
 
-Only needed on a fresh database. If you are restoring existing data in Step 8,
-the accounts come with it, so skip this.
+Only for a new installation. If you are restoring an existing database in
+Step 8 the accounts come with it, so skip this step.
 
-Add `SEED_DB=1` to `.env`, restart, then remove it again:
+Create the first account, then give it the `developer` role, which is the one
+with full access:
 
 ```bash
-echo "SEED_DB=1" >> .env
-docker compose up -d
-docker compose logs web --tail 30
-sed -i '/^SEED_DB=1$/d' .env
-docker compose up -d
+docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py update_user_role you@ciprb.org --role developer --org CIPRB
 ```
 
+`createsuperuser` asks for an email, a full name and an organisation. The
+organisation must be one of `CIPRB`, `PHD` or `Bandhu`. The second command is
+not optional: a new account is created with the `manager` role, and being a
+Django superuser does not by itself grant access, because this application
+checks the role, not the superuser flag.
+
+The seven roles are `developer`, `supervisor`, `org_lead`, `manager`,
+`field_staff`, `ciprb_baseline` and `focal`.
+
 **Check:** log in at `https://simple.ciprb.org`.
+
+Create everyone else from inside the application once you are in.
+
+> There is also a `seed_users` command that creates the original project's
+> standard account set. It is gated on `SEED_DB=1` **and** on a separate
+> password variable for each account, listed at the bottom of
+> `.env.example`. An account whose password variable is blank is skipped
+> with a warning, so setting `SEED_DB=1` on its own creates nobody. For a new
+> installation `createsuperuser` is simpler, and it does not recreate the
+> previous team's email addresses.
 
 ---
 

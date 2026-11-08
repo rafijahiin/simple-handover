@@ -1,0 +1,42 @@
+# SIMPLE, single-server deployment.
+#
+#   1. cp .env.example .env     and fill it in
+#   2. set POSTGRES_PASSWORD below to the same password you put in DATABASE_URL
+#   3. docker compose up -d --build
+#
+# The application is bound to 127.0.0.1 on purpose. Nginx sits in front of it
+# and holds the TLS certificate. See docs/SERVER_SETUP_GUIDE.md, Step 6.
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: simple
+      POSTGRES_USER: simple
+      POSTGRES_PASSWORD: CHANGE_ME
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simple -d simple"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: always
+    env_file: .env
+    environment:
+      PORT: "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media:/app/mediafiles
+
+volumes:
+  pgdata:
+  media:
