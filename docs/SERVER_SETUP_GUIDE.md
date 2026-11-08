@@ -112,16 +112,16 @@ before it is switched off.**
 | `FERNET_KEY` | **The critical one.** Three patient-identifying fields in the fistula and MPDSR modules are encrypted with this key. If you start with a new key, every one of those existing records becomes permanently unreadable. There is no recovery, no workaround and no support request that will fix it |
 | `KOBO_API_TOKEN` | The KoboToolbox API token |
 | `KOBO_WEBHOOK_SECRET` | The shared secret that proves an incoming webhook really came from Kobo |
-| `KOBO_ASSET_UID_*` | Five form identifiers: MPDSR, FISTULA, ACTIVITY, BASELINE, CLIENT_REG |
+| `KOBO_ASSET_UID_*` | Eight form identifiers. `.env.example` lists them all |
 | `GROQ_API_KEY` | Only if the AI written report narrative is wanted |
 | `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_IDS` | Only if Telegram alerts are wanted |
 
 `SECRET_KEY` is the exception. Generate a fresh one. Do not reuse the old.
 
-### 1d. The database
+### 1d. The database file
 
-A full `pg_dump` of the current production database, taken on the day of the
-move. See Step 8.
+A `pg_dump` file, which will be supplied to you. It is taken on the day of the
+move, so ask for it then rather than in advance. See Step 8.
 
 ### 1e. Access to KoboToolbox
 
@@ -451,13 +451,19 @@ Create everyone else from inside the application once you are in.
 
 **The order of these matters. Do not reorder them.**
 
-### 8a. Back up the current database
+### 8a. Obtain the database file
 
-From a machine with access to the current database:
+You will be given a `pg_dump` file, `simple-backup.dump`. Copy it onto the
+server, for example into `/srv/simple`.
 
-```bash
-pg_dump "<the current DATABASE_URL>" -Fc -f simple-backup.dump
-```
+Records belonging to the implementing partners, PHD and Bandhu, have been
+removed from it before handover, so those two dashboards will be empty on the
+new system. The CIPRB data, meaning the maternal and perinatal death
+surveillance, near miss, fistula, safe surgery, baseline and training records,
+is all present. This is deliberate, not a failed restore.
+
+The file contains patient-identifying information. Handle it accordingly, and
+delete your copy once the restore is verified.
 
 ### 8b. Confirm FERNET_KEY is already in place
 
@@ -479,15 +485,20 @@ docker compose exec web python manage.py shell -c \
   "from submissions.models import KoboSubmission; print(KoboSubmission.objects.count())"
 ```
 
-The number should match the old system. Then open the dashboard and confirm
-the figures look right, and that a fistula or MPDSR record displays its
-patient name correctly rather than as unreadable text. If names are
-unreadable, `FERNET_KEY` is wrong. **Stop and fix it before going further.**
+You should get a non-zero number. Then open the dashboard and confirm the
+CIPRB figures look right, and that a fistula or MPDSR record displays its
+patient name correctly rather than as unreadable text. If the names are
+unreadable, `FERNET_KEY` is wrong. **Stop and fix it before going further**,
+and do not re-save any of those records while the key is wrong.
+
+Compare the CIPRB totals against the current dashboard. They should match. The
+PHD and Bandhu figures will not, for the reason in 8a.
 
 ### 8d. Rotate the encryption key, afterwards
 
-Optional, and only once the restore is verified working. Rotate the key on the
-new server rather than carrying the old one indefinitely.
+Do this once the restore is verified working, and not before. The key has been
+in use on another system, so it should not stay in service indefinitely on
+yours.
 
 ```bash
 docker compose exec web python manage.py rotate_fernet_key
