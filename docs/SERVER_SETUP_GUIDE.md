@@ -25,7 +25,7 @@ system will look fine and simply not receive any data.
 | **Step 6** | Put Nginx and HTTPS in front |
 | **Step 7** | Create the login accounts |
 | **Step 8** | Bring the existing data across |
-| **Step 9** | Point KoboToolbox at the new server |
+| **Step 9** | Deploy the forms in your own KoboToolbox account |
 | **Step 10** | Test end to end with a real submission |
 | **Step 11** | Set up the scheduled jobs |
 | **Step 12** | Set up backups |
@@ -123,10 +123,14 @@ before it is switched off.**
 A `pg_dump` file, which will be supplied to you. It is taken on the day of the
 move, so ask for it then rather than in advance. See Step 8.
 
-### 1e. Access to KoboToolbox
+### 1e. A KoboToolbox account, and the form files
 
-An account with permission to edit the REST Services on every deployed form.
-Without this, Step 9 cannot be done and no data will ever arrive.
+Your own KoboToolbox account, and its API token from the account settings.
+You will deploy the forms there yourself in Step 9.
+
+You will also be given the fourteen forms as XLSForm files, in a folder called
+`CIPRB_Kobo_Forms_XLSForm`. Without these, Step 9 cannot be done and no field
+data will ever arrive.
 
 ---
 
@@ -510,37 +514,129 @@ data.
 
 ---
 
-# Step 9. Point KoboToolbox at the new server
+# Step 9. Deploy the forms in your own KoboToolbox account
 
 **This is the step that actually moves the system.** Until it is done, field
-submissions still go to the old server, no matter how well the new one works.
+submissions still arrive at the old server, no matter how well the new one
+works.
 
-For every deployed form in KoboToolbox, open **Settings**, then **REST
-Services**, and edit the existing service:
+You have been given the forms as XLSForm files, in `CIPRB_Kobo_Forms_XLSForm`.
+There are fourteen. Import each one into your own KoboToolbox account and
+deploy it.
+
+### 9a. Import and deploy
+
+In KoboToolbox: **New project**, then **Import an XLSForm**, choose the file,
+then **Deploy**. Repeat for all fourteen.
+
+Keep the files as they are. Do not rename them and do not edit the `settings`
+sheet. The `form_id` inside each file is what tells this system which handler
+to use, so if it changes, submissions arrive and are rejected as unknown.
+
+### 9b. Set the REST Service on each form
+
+For each deployed form, open **Settings**, then **REST Services**, and add
+one:
 
 | Field | Value |
 |---|---|
-| Endpoint URL | `https://simple.ciprb.org/webhook/programs/form/<form_slug>/` |
+| Endpoint URL | `https://simple.ciprb.org/webhook/kobo/` |
 | Method | POST |
 | Header name | `Authorization` |
 | Header value | `Token <your KOBO_WEBHOOK_SECRET>` |
 
-The form slug is the one already in the existing service URL. Only the domain
-at the front changes. The PHD and Bandhu service delivery forms use slugs such
-as `spondon_clinic_visit_v1`, `spondon_client_reg_v1`, `spondon_outreach_v1`
-and so on; the full list is in `programs/webhook_urls.py`.
+All fourteen CIPRB forms use that same endpoint. The system reads the
+`form_id` out of the submission and routes it from there.
 
-The CIPRB surveillance forms, MPDSR and fistula, use a different endpoint:
+### 9c. Collect the new asset UIDs
+
+Deploying in your own account gives every form a **new asset UID**. The old
+ones belong to the previous account and are no longer valid.
+
+The UID is in the project's URL, the `a...` part:
 
 ```
-https://simple.ciprb.org/webhook/kobo/
+https://kf.kobotoolbox.org/#/forms/aXXXXXXXXXXXXXXXXXXXXX/summary
+                                   ^^^^^^^^^^^^^^^^^^^^^^
 ```
 
-with the same `Authorization: Token <secret>` header.
+Write down the UID of each form. You need them twice, in 9d and 9e.
 
-**Work through every form. A form you miss will go on submitting into the old
-server, and that data will be lost when it is switched off.** List the forms
-first and tick them off.
+### 9d. Put the new UIDs in `.env`
+
+Routing works without this, because it goes by `form_id`. These are needed for
+the parts that write back **into** KoboToolbox and read from it.
+
+```ini
+KOBO_API_TOKEN=<your own token, from your KoboToolbox account settings>
+KOBO_TOKEN=<the same value>
+
+KOBO_ASSET_UID_MPDSR=<CIPRB-2 Community Maternal>
+KOBO_ASSET_UID_FISTULA=<CIPRB-1 Fistula Question Bank>
+KOBO_ASSET_UID_BASELINE=<CIPRB Baseline FSW>
+KOBO_ASSET_UID_FISTULA_QB=<CIPRB-1 Fistula Question Bank, same as above>
+KOBO_ASSET_UID_MPDSR_ACTION=<CIPRB-10 MPDSR Response Plan>
+```
+
+**The last two matter most.** When a fistula case or an MPDSR action is
+created, the system issues the official ID and writes it back into the Kobo
+submission so the paper and the screen agree. If these two still hold the old
+account's UIDs, that write-back tries to edit a form you do not own, and the
+IDs never appear in Kobo.
+
+Restart after editing: `docker compose up -d`
+
+### 9e. Update the form registry in the database
+
+Twelve rows in the database still carry the old UIDs. They drive the
+reconciliation check, which is what tells you whether any submission has gone
+missing. Until they are corrected, that check reports every form as broken.
+
+```bash
+docker compose exec db psql -U simple -d simple
+```
+
+Then, for each form, one line:
+
+```sql
+UPDATE indicators_koboformmapping SET kobo_asset_uid = 'aNEWUID' WHERE form_slug = 'ciprb_mpdsr_community_maternal_v1';
+```
+
+The twelve slugs, in the order the files are numbered:
+
+| File | `form_slug` |
+|---|---|
+| CIPRB-1 Fistula Question Bank | `ciprb_fistula_questions_v1` |
+| CIPRB-2 MPDSR Community Maternal | `ciprb_mpdsr_community_maternal_v1` |
+| CIPRB-3 MPDSR Community Neonatal | `ciprb_mpdsr_community_neonatal_v1` |
+| CIPRB-4 MPDSR Facility Maternal | `ciprb_mpdsr_facility_maternal_v1` |
+| CIPRB-5 MPDSR Facility Neonatal | `ciprb_mpdsr_facility_neonatal_v1` |
+| CIPRB-6 Social Autopsy | `ciprb_social_autopsy_v1` |
+| CIPRB-7 Notification Slip 01 | `ciprb_notification_slip_01_v1` |
+| CIPRB-8 Notification Slip 02 | `ciprb_notification_slip_02_v1` |
+| CIPRB-9 Maternal Near Miss | `ciprb_near_miss_v1` |
+| CIPRB-10 MPDSR Response Plan | `ciprb_mpdsr_response_plan_v1` |
+| CIPRB Baseline FSW | `ciprb_baseline_fsw_v1` |
+| CIPRB Baseline Hijra | `ciprb_baseline_hijra_v1` |
+
+Check your work:
+
+```sql
+SELECT form_slug, kobo_asset_uid FROM indicators_koboformmapping
+WHERE kobo_asset_uid <> '' ORDER BY form_slug;
+```
+
+Type `\q` to leave psql.
+
+### 9f. About the old submissions
+
+The historical records are already in the database you restored in Step 8, so
+the dashboard is complete from day one.
+
+What does **not** come across is the raw submission history inside
+KoboToolbox. Your new forms start with zero submissions in Kobo, while the
+dashboard shows the full history. That is expected. If you ever need the
+original Kobo-side exports, ask for them before the old account is closed.
 
 ---
 
@@ -774,7 +870,10 @@ ticked.
 
 **Cutover**
 
-- [ ] Every Kobo form's REST Service repointed at the new domain
+- [ ] All fourteen forms imported and deployed in your own Kobo account
+- [ ] A REST Service added to each one, pointing at your domain
+- [ ] New asset UIDs put in `.env` (9d), especially the two write-back ones
+- [ ] The twelve registry rows updated in the database (9e)
 - [ ] A real test submission arrives and appears in the approval queue
 - [ ] The test record is approved, then deleted
 
