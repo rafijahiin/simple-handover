@@ -18,26 +18,29 @@ import requests
 from django.db import transaction
 
 from programs.webhook import FORM_HANDLERS, _flatten_group_keys, _geolocation
+from programs.kobo_uids import DEFAULT_CIPRB_SLUG_TO_UID, uid_for
 
 KOBO_BASE = 'https://kf.kobotoolbox.org/api/v2'
 
-# slug -> deployed asset UID (stable across PATCH redeploys). Mirrors
-# programs/test_ciprb_form_contract.SLUG_TO_UID; kept here so the replay module
-# is self-contained.
-CIPRB_SLUG_TO_UID = {
-    'ciprb_fistula_questions_v1':        'aH86Euq2AeJ8S9VYdry4PC',
-    'ciprb_fistula_campaign_v1':         'aso6xsUo8PMYRCzGQBc8Cm',
-    'ciprb_mpdsr_community_maternal_v1': 'apvPk7qq94nry2aW3z7y4H',
-    'ciprb_mpdsr_community_neonatal_v1': 'awQXeYhuLoLrM38fwSrF8y',
-    'ciprb_mpdsr_facility_maternal_v1':  'aVQbxhGnDHNCe6AazSJByM',
-    'ciprb_mpdsr_facility_neonatal_v1':  'a6pg47mTt8E56igHnK8SSD',
-    'ciprb_social_autopsy_v1':           'a6vQiCJ3tz4MRxKqdMHCbA',
-    'ciprb_notification_slip_01_v1':     'aSnEgQT6DUooVanZXubhAF',
-    'ciprb_notification_slip_02_v1':     'aaCnfRHHgkukkhDgXwUnXX',
-    'ciprb_near_miss_v1':                'aTzdRTvhZ8yUQCGhA8UG5R',
-    'ciprb_mpdsr_response_plan_v1':      'auFCf7bfBDtrP6xeW5F2KJ',
-    'ciprb_safe_surgery_v1':             'a7YYwChtSu7cdrMZQtxUKT',
-}
+# slug -> asset UID for the account this system was first deployed against.
+# Kept as the DEFAULT only. Use ciprb_slug_to_uid() so an installation that has
+# deployed the forms in its own KoboToolbox account resolves its own UIDs.
+CIPRB_SLUG_TO_UID = dict(DEFAULT_CIPRB_SLUG_TO_UID)
+
+
+def ciprb_slug_to_uid() -> dict:
+    """The CIPRB slug -> UID map for THIS installation.
+
+    Each slug is resolved through programs.kobo_uids: environment override
+    first, then the KoboFormMapping registry, then the default above. Slugs
+    that resolve to nothing are left out.
+    """
+    out = {}
+    for slug, fallback in CIPRB_SLUG_TO_UID.items():
+        uid = uid_for(slug, fallback)
+        if uid:
+            out[slug] = uid
+    return out
 
 
 def _fetch(uid, token, limit=None):
@@ -71,10 +74,11 @@ def replay_ciprb(token, slugs=None, limit=None):
 
     -> { slug: {'n': int, 'ok': int, 'http4xx': int, 'errors': [ {id, error} ]} }
     """
-    slugs = slugs or list(CIPRB_SLUG_TO_UID)
+    resolved = ciprb_slug_to_uid()
+    slugs = slugs or list(resolved)
     out = {}
     for slug in slugs:
-        uid = CIPRB_SLUG_TO_UID.get(slug)
+        uid = resolved.get(slug)
         handler = FORM_HANDLERS.get(slug)
         if not uid or handler is None:
             out[slug] = {'n': 0, 'ok': 0, 'http4xx': 0,

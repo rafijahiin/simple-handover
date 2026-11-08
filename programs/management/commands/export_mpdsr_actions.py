@@ -45,9 +45,21 @@ logger = logging.getLogger(__name__)
 
 # CIPRB 10 — MPDSR Action Plan. Its 'update an action' dropdown + pulldata read
 # this CSV.
-ACTION_FORM_UIDS = [
-    ('auFCf7bfBDtrP6xeW5F2KJ', 'CIPRB 10 — MPDSR Action Plan'),
+ACTION_FORM_UIDS_SLUGS = [
+    ('ciprb_mpdsr_response_plan_v1', 'CIPRB 10 - MPDSR Action Plan'),
 ]
+
+
+def action_form_uids():
+    """(uid, label) for this installation.
+
+    Resolved through programs.kobo_uids rather than hardcoded, so an
+    installation that deployed these forms in its own KoboToolbox
+    account attaches the CSV to its own form and not to someone
+    else's.
+    """
+    from programs.kobo_uids import uid_for
+    return [(uid_for(slug), label) for slug, label in ACTION_FORM_UIDS_SLUGS if uid_for(slug)]
 
 CSV_FILENAME = 'mpdsr_actions.csv'
 KOBO_BASE = 'https://kf.kobotoolbox.org'
@@ -130,7 +142,7 @@ def upload_to_kobo(csv_bytes: bytes, stdout) -> bool:
     api = f'{KOBO_BASE}/api/v2'
     all_ok = True
 
-    for uid, label in ACTION_FORM_UIDS:
+    for uid, label in action_form_uids():
         stdout.write(f'  → {label} ({uid})')
 
         # 1. Delete any previous mpdsr_actions.csv attached to this form.

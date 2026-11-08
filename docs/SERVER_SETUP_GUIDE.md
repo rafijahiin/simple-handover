@@ -477,9 +477,25 @@ becomes permanently unreadable. Confirm this now, before restoring.
 
 ### 8c. Restore
 
+Stop the application first. It runs migrations and background jobs on start,
+and those will fight a restore that is replacing the same tables underneath
+them.
+
 ```bash
+docker compose stop web
 docker compose cp simple-backup.dump db:/tmp/
-docker compose exec db pg_restore -U simple -d simple   --clean --if-exists --no-owner --no-privileges /tmp/simple-backup.dump
+```
+
+Restore into a freshly created database rather than over the top of the one
+the application has already migrated. `--single-transaction` means a failure
+part way through leaves nothing behind, instead of a half-loaded database that
+looks fine until someone opens the wrong page.
+
+```bash
+docker compose exec db dropdb   -U simple --if-exists simple
+docker compose exec db createdb -U simple simple
+docker compose exec db pg_restore -U simple -d simple   --no-owner --no-privileges --single-transaction /tmp/simple-backup.dump
+docker compose start web
 ```
 
 **Check:**
@@ -504,13 +520,27 @@ Do this once the restore is verified working, and not before. The key has been
 in use on another system, so it should not stay in service indefinitely on
 yours.
 
+Treat it as a separate piece of maintenance, on a quiet day, with a fresh
+backup taken first. Not part of go-live.
+
 ```bash
 docker compose exec web python manage.py rotate_fernet_key
 ```
 
-This runs the old and new keys together and re-encrypts the records properly.
-Do **not** rotate by simply editing `FERNET_KEY` in `.env`. That destroys the
-data.
+That is a **dry run**. It reports what it would re-encrypt and changes
+nothing. Read the output, then apply it with `--commit`:
+
+```bash
+docker compose exec web python manage.py rotate_fernet_key --commit
+```
+
+Put the old key in `FERNET_KEY_FALLBACKS` and the new one in `FERNET_KEY`
+before running with `--commit`, so the command can read the old records and
+write them back under the new key.
+
+It works by reading with the old key and writing with the new one. Do **not**
+rotate by editing `FERNET_KEY` in `.env` and restarting. That leaves every
+existing record encrypted under a key the system no longer has.
 
 ---
 
@@ -662,9 +692,14 @@ attached to the Kobo form as media. New projects have no media, so this has to
 be done once, after 9d.
 
 ```bash
-docker compose exec web python manage.py export_fistula_clients
-docker compose exec web python manage.py export_mpdsr_actions
+docker compose exec web python manage.py export_fistula_clients --upload
+docker compose exec web python manage.py export_mpdsr_actions --upload
 ```
+
+**`--upload` is not optional.** Without it both commands only write the CSV
+locally and print a summary, which looks like success and attaches nothing.
+
+They send to whichever UID step 9e put in the registry, so do 9e first.
 
 The first builds `fistula_clients.csv` from the registered patients and
 attaches it to CIPRB-1. Without it, a field worker reaching the Diagnosed,

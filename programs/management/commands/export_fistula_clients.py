@@ -52,10 +52,22 @@ logger = logging.getLogger(__name__)
 
 # The single CIPRB Fistula Question Bank form gets the CSV — its later-stage
 # dropdown + pulldata read it, and its Suspected-stage duplicate check too.
-FISTULA_FORM_UIDS = [
-    ('aH86Euq2AeJ8S9VYdry4PC', 'CIPRB 1 — Fistula Question Bank'),
-    ('aso6xsUo8PMYRCzGQBc8Cm', 'CIPRB — Fistula Campaign (Identification)'),
+FISTULA_FORM_UIDS_SLUGS = [
+    ('ciprb_fistula_questions_v1', 'CIPRB 1 - Fistula Question Bank'),
+    ('ciprb_fistula_campaign_v1', 'CIPRB - Fistula Campaign (Identification)'),
 ]
+
+
+def fistula_form_uids():
+    """(uid, label) for this installation.
+
+    Resolved through programs.kobo_uids rather than hardcoded, so an
+    installation that deployed these forms in its own KoboToolbox
+    account attaches the CSV to its own form and not to someone
+    else's.
+    """
+    from programs.kobo_uids import uid_for
+    return [(uid_for(slug), label) for slug, label in FISTULA_FORM_UIDS_SLUGS if uid_for(slug)]
 
 CSV_FILENAME = 'fistula_clients.csv'
 KOBO_BASE = 'https://kf.kobotoolbox.org'
@@ -138,7 +150,7 @@ def upload_to_kobo(csv_bytes: bytes, stdout) -> bool:
     api = f'{KOBO_BASE}/api/v2'
     all_ok = True
 
-    for uid, label in FISTULA_FORM_UIDS:
+    for uid, label in fistula_form_uids():
         stdout.write(f'  → {label} ({uid})')
 
         # 1. Delete any previous fistula_clients.csv attached to this form.

@@ -146,3 +146,26 @@ DJANGO_SETTINGS_MODULE=spondon.settings.development python manage.py test
 dashboard is defined to mean where the data does not settle it by itself. Read
 it before changing any counting logic. It has to stay at the root, because a
 test asserts the path.
+
+---
+
+## Running this in your own KoboToolbox account
+
+The forms are routed by the form id inside the XLSForm, which survives being
+imported into another account, so routing needs no configuration.
+
+Everything this system sends *out* to KoboToolbox does need the asset UID, and
+those change when the forms are deployed in a different account: the
+`system_ref` write-back, the two lookup CSV exporters and the reconciliation
+loop. They all resolve through `programs/kobo_uids.py`, in this order:
+
+1. `KOBO_ASSET_UID_<SLUG>` in the environment, upper-cased.
+2. `indicators.KoboFormMapping.kobo_asset_uid` for that slug. This is the
+   normal route, and Step 9e of the setup guide is where it gets filled in.
+3. The built-in default, which is the account the system was first deployed
+   against.
+
+The webhook health check reads `SIMPLE_PUBLIC_URL` for the same reason. Set
+it, or the check reports every hook as pointing somewhere else.
+
+`programs/test_kobo_uid_resolution.py` holds this down.

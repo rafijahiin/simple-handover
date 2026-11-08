@@ -24,7 +24,7 @@ from django.db import IntegrityError, transaction
 
 from mpdsr.models import DISTRICT_ACTION_CODE
 from programs.bandhu_handlers import _writeback_kobo_id
-from programs.ciprb_replay import CIPRB_SLUG_TO_UID
+from programs.kobo_uids import uid_for
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def allocate_system_ref(obj, form_code: str, *, writeback: bool = True,
         return None
 
     kobo_id = getattr(obj, 'kobo_submission_id', '')
-    asset_uid = CIPRB_SLUG_TO_UID.get(_FORM_CODE_TO_SLUG.get(form_code, ''), '')
+    asset_uid = uid_for(_FORM_CODE_TO_SLUG.get(form_code, ''))
     if writeback and kobo_id and asset_uid:
         _writeback_kobo_id(asset_uid, kobo_id, obj.system_ref,
                            field_path='system_ref')

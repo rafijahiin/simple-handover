@@ -31,7 +31,10 @@ from programs.models import ServiceCenter
 FORM_ID    = 'no_report_v1'
 FORM_TITLE = 'No Reporting Today'
 FORM_FILE  = 'No_Reporting_Today.xlsx'
-APP_BASE   = 'https://web-production-091fa.up.railway.app'
+# This installation's own address. Set SIMPLE_PUBLIC_URL; the literal
+# below is only the first deployment's address, kept as a fallback.
+APP_BASE   = (os.environ.get('SIMPLE_PUBLIC_URL', '').strip()
+              or 'https://web-production-091fa.up.railway.app')
 
 _REASONS = [
     ('centre_closed', 'Centre closed',           'কেন্দ্র বন্ধ'),

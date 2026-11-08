@@ -25,10 +25,23 @@ only the snapshot persists.
 import os
 
 import requests
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from programs.ciprb_replay import CIPRB_SLUG_TO_UID, _fetch
+from programs.ciprb_replay import ciprb_slug_to_uid, _fetch
+
+
+def _our_host() -> str:
+    """The hostname this installation answers on.
+
+    The webhook health check used to match a hardcoded hostname, so any other
+    installation reported every hook as misconfigured. Reads SIMPLE_PUBLIC_URL
+    instead, which every deployment sets to its own address.
+    """
+    from urllib.parse import urlparse
+    url = (getattr(settings, 'SIMPLE_PUBLIC_URL', '') or '').strip()
+    return urlparse(url).netloc or url
 from programs.webhook import FORM_HANDLERS, _flatten_group_keys, _geolocation
 
 KOBO_BASE = 'https://kf.kobotoolbox.org/api/v2'
@@ -89,7 +102,7 @@ def _hook_health(uid, token):
     active = [h for h in hooks if h.get('active')]
     return {
         'hook_active': bool(active),
-        'hook_endpoint_ok': all('web-production-091fa' in (h.get('endpoint') or '')
+        'hook_endpoint_ok': all(_our_host() in (h.get('endpoint') or '')
                                 for h in active) if active else None,
         # Kobo never resets these counters, so this is cumulative-lifetime, shown
         # for context — the authoritative "missing now" signal is `stranded`.
@@ -191,7 +204,7 @@ def discover_partner_forms(token):
             'hook': {
                 'hook_active': bool(active),
                 'hook_endpoint_ok': all(
-                    'web-production-091fa' in (h.get('endpoint') or '')
+                    _our_host() in (h.get('endpoint') or '')
                     for h in active) if active else None,
                 'failed_lifetime': sum(int(h.get('failed_count') or 0)
                                        for h in active),
@@ -243,7 +256,7 @@ def reconcile_ciprb(token, limit=None):
     verification-gated (BaselineResponse) and has its own console.
     """
     results = []
-    for slug, uid in CIPRB_SLUG_TO_UID.items():
+    for slug, uid in ciprb_slug_to_uid().items():
         handler = FORM_HANDLERS.get(slug)
         count_fn = _counter(slug)
         if handler is None or count_fn is None:
@@ -320,7 +333,7 @@ def audit_ciprb_gap(token, slugs=None, limit=None):
     The count is therefore an upper bound on distinct missing rows.
     """
     results = []
-    for slug, uid in CIPRB_SLUG_TO_UID.items():
+    for slug, uid in ciprb_slug_to_uid().items():
         if slugs and slug not in slugs:
             continue
         handler = FORM_HANDLERS.get(slug)
