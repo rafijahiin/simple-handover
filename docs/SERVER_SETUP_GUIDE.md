@@ -180,7 +180,7 @@ libraries, is inside the image. Nothing else has to be installed on the
 server.
 
 > **If CIPRB policy forbids Docker**, the application can be installed
-> directly: Python 3.12 with a virtual environment, PostgreSQL 14 or later,
+> directly: Python 3.12 with a virtual environment, PostgreSQL 18,
 > Node 20 to build the frontend once, Gunicorn, and
 > `python -m playwright install --with-deps chromium` for the report renderer.
 > It is more work to set up and more work to keep consistent, and it no longer

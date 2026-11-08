@@ -9,7 +9,10 @@
 
 services:
   db:
-    image: postgres:16
+    # PostgreSQL 18. The database you will be given was produced by an 18
+    # server, and pg_restore refuses to load a dump from a newer server than
+    # the one it is restoring into. Do not lower this.
+    image: postgres:18
     restart: always
     environment:
       POSTGRES_DB: simple

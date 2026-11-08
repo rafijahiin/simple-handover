@@ -66,7 +66,7 @@ all with placeholder values.
 |---|---|
 | Language | Python 3.12 |
 | Framework | Django 5.2 with Django REST Framework |
-| Database | PostgreSQL 14 or later |
+| Database | PostgreSQL 18 |
 | Application server | Gunicorn, behind Nginx |
 | Static files | WhiteNoise, inside the application |
 | Frontend | React with TypeScript, built by Vite |
