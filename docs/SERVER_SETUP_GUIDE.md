@@ -644,45 +644,38 @@ ones.
 
 Restart after editing: `docker compose up -d`
 
-### 9e. Update the form registry in the database
+### 9e. Tell the system your new asset UIDs
 
-Twelve rows in the database still carry the old UIDs. They drive the
-reconciliation check, which is what tells you whether any submission has gone
-missing. Until they are corrected, that check reports every form as broken.
+Everything that writes back **into** KoboToolbox needs to know your UIDs: the
+case and action ID write-back, the lookup files in 9f, and the reconciliation
+check. Until this is done they still point at the account the system was first
+deployed from.
+
+There is a command that does it for you. It reads your KoboToolbox account,
+matches each form by the form id inside the XLSForm, and fills in the UIDs. No
+typing, and no chance of pasting the wrong UID against the wrong form.
+
+Make sure `KOBO_API_TOKEN` in `.env` is your own token, then:
 
 ```bash
-docker compose exec db psql -U simple -d simple
+docker compose exec web python manage.py sync_kobo_uids
 ```
 
-Then, for each form, one line:
+That is a dry run. It prints every form, the UID it found, and what it would
+change. Read it, then write the values:
 
-```sql
-UPDATE indicators_koboformmapping SET kobo_asset_uid = 'aNEWUID' WHERE form_slug = 'ciprb_mpdsr_community_maternal_v1';
+```bash
+docker compose exec web python manage.py sync_kobo_uids --apply
 ```
 
-The twelve slugs:
+Expect to see all fourteen forms listed. If one says **NOT FOUND**, it has not
+been deployed in your account yet, or the `settings` sheet in its Excel file
+was edited and the form id no longer matches. Deploy it, or restore the
+original file, and run the command again.
 
-| Excel file | `form_slug` |
-|---|---|
-| CIPRB-1 Fistula Question Bank | `ciprb_fistula_questions_v1` |
-| CIPRB-2 MPDSR Community Maternal | `ciprb_mpdsr_community_maternal_v1` |
-| CIPRB-3 MPDSR Community Neonatal | `ciprb_mpdsr_community_neonatal_v1` |
-| CIPRB-4 MPDSR Facility Maternal | `ciprb_mpdsr_facility_maternal_v1` |
-| CIPRB-5 MPDSR Facility Neonatal | `ciprb_mpdsr_facility_neonatal_v1` |
-| CIPRB-6 Social Autopsy | `ciprb_social_autopsy_v1` |
-| CIPRB-7 Notification Slip 01 | `ciprb_notification_slip_01_v1` |
-| CIPRB-8 Notification Slip 02 | `ciprb_notification_slip_02_v1` |
-| CIPRB-9 Maternal Near Miss | `ciprb_near_miss_v1` |
-| CIPRB-10 MPDSR Response Plan | `ciprb_mpdsr_response_plan_v1` |
-| CIPRB Baseline FSW | `ciprb_baseline_fsw_v1` |
-| CIPRB Baseline Hijra | `ciprb_baseline_hijra_v1` |
-
-Check your work, then type `\q` to leave:
-
-```sql
-SELECT form_slug, kobo_asset_uid FROM indicators_koboformmapping
-WHERE kobo_asset_uid <> '' ORDER BY form_slug;
-```
+> If you would rather do it by hand, the table is
+> `indicators_koboformmapping`, one row per form, column `kobo_asset_uid`,
+> keyed on `form_slug`. The command is the safer route.
 
 ### 9f. Upload the two lookup files
 
@@ -960,7 +953,7 @@ ticked.
 - [ ] All fourteen forms imported and deployed in your own Kobo account
 - [ ] A REST Service added to each one, pointing at your domain
 - [ ] New asset UIDs put in `.env` (9d), especially the two write-back ones
-- [ ] The twelve registry rows updated in the database (9e)
+- [ ] `sync_kobo_uids --apply` run, all fourteen forms matched (9e)
 - [ ] The two lookup files exported and attached to CIPRB-1 and CIPRB-10 (9f)
 - [ ] CIPRB-1 opened in Enketo and the patient dropdown is populated
 - [ ] A real test submission arrives and appears in the approval queue
